@@ -1,3 +1,13 @@
+<!-- HMCL-Unlocked: fork notice, not part of upstream -->
+> [!IMPORTANT]
+> **This repository is HMCL-Unlocked, an unofficial fork of HMCL.** Its only purpose is to keep HMCL's download features fully available in Chinese Mainland. Upstream introduced a temporary download restriction in [#7017](https://github.com/HMCL-dev/HMCL/pull/7017) and removed it in [#7038](https://github.com/HMCL-dev/HMCL/pull/7038); this fork tracks upstream `main` (baseline [`0d20910ea`](https://github.com/HMCL-dev/HMCL/commit/0d20910ea), 2026-10-22), contains no region-based download restriction, and will remove it again if upstream reintroduces one. Everything else stays in sync with upstream; apart from the restriction and the detection code that existed solely for it, no features, UI or behaviour are changed.
+>
+> Builds from this repository are **unofficial**: they are not signed with HMCL's official key and identify themselves as "Unofficial Build" with an unofficial version number. Please report issues in [this repository](https://github.com/COOKIE3319/HMCL-Unlocked/issues), not upstream; this fork is not affiliated with the HMCL team and comes without warranty.
+>
+> HMCL-Unlocked is distributed under [GPLv3](../LICENSE) together with HMCL's [additional terms](#license). When redistributing, keep the copyright notices, mark modified versions, and provide the corresponding source code. Users are responsible for complying with the laws and terms of service applicable in their region.
+>
+> 中文说明见[简体中文 README](README_zh_Hans.md)。
+
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY NAME=TITLE -->
 <div align="center">

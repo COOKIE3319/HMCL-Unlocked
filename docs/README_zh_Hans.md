@@ -1,3 +1,13 @@
+<!-- HMCL-Unlocked: 分支说明，不属于上游内容 -->
+> [!IMPORTANT]
+> **本仓库是 HMCL-Unlocked，HMCL 的非官方分支。** 本分支的唯一目的是保持 HMCL 在中国大陆地区的游戏下载功能完整可用。上游曾在 [#7017](https://github.com/HMCL-dev/HMCL/pull/7017) 中引入临时下载限制，并在 [#7038](https://github.com/HMCL-dev/HMCL/pull/7038) 中将其移除；本分支同步上游 `main`（基线 [`0d20910ea`](https://github.com/HMCL-dev/HMCL/commit/0d20910ea)，2026-10-22），不包含任何地区下载限制，若上游重新引入类似限制，会在同步时将其移除。除此之外，本分支与上游保持一致；除下载限制及仅为该限制服务的检测逻辑外，不修改任何其他功能、界面或行为。
+>
+> 本仓库构建的版本为**非官方构建**：不使用 HMCL 官方签名密钥，版本号与窗口标题会显示“非官方构建”。相关问题请反馈到[本仓库](https://github.com/COOKIE3319/HMCL-Unlocked/issues)，不要提交给上游；本分支与 HMCL 开发团队无关，不提供任何担保。
+>
+> 本分支依据 [GPLv3](../LICENSE) 及 HMCL 的[附加条款](#开源协议)发布。分发时请保留版权声明、标明修改版本，并提供对应源代码。请自行遵守所在地区的法律法规及 Minecraft 使用条款。
+>
+> English: [README](README.md)。
+
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=TITLE -->
 <div align="center">
