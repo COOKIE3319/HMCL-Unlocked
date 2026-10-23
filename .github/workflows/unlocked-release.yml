@@ -1,0 +1,125 @@
+# HMCL-Unlocked: build and publish releases for this fork.
+#
+# Upstream's release.yml only runs in the HMCL-dev organization and depends on
+# official signing keys, so it cannot publish releases from a fork. This
+# workflow is kept separate from upstream files on purpose.
+#
+# Usage:
+#   - Push a tag (e.g. `git tag v3.17.unofficial-<sha> && git push origin <tag>`)
+#   - Or run it manually from the Actions tab ("Run workflow")
+#
+# Every build is an unofficial build: `hmcl.official=false` and the version
+# contains `unofficial-<sha>`, as required by HMCL's additional terms.
+
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (default: v<built version>)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: unlocked-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'liberica'
+          java-version: '17'
+          java-package: 'jdk+fx'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-cleanup: never
+
+      - name: Build
+        run: xvfb-run --auto-servernum ./gradlew clean makeExecutables makeDeb --no-daemon --parallel
+        env:
+          JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+          MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+
+      - name: Read build metadata
+        id: meta
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          JAR=$(ls HMCL/build/libs/HMCL-*.jar | head -n 1)
+          VERSION=$(basename "$JAR" .jar)
+          VERSION=${VERSION#HMCL-}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            TAG="$GITHUB_REF_NAME"
+          elif [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="v$VERSION"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          unzip -p "$JAR" assets/hmcl.properties > hmcl.properties
+          grep -q '^hmcl.official=false$' hmcl.properties
+          echo "Built version $VERSION for tag $TAG"
+
+      - name: Generate release notes
+        run: |
+          VERSION='${{ steps.meta.outputs.version }}'
+          TAG='${{ steps.meta.outputs.tag }}'
+          BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          {
+            echo "&nbsp;**[HMCL-Unlocked](https://github.com/${GITHUB_REPOSITORY})** 是基于上游 [HMCL](https://github.com/HMCL-dev/HMCL) 的非官方构建，仅移除中国大陆地区的游戏下载限制；本版本对应提交 [\`${GITHUB_SHA::7}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})。"
+            echo
+            echo "| 文件 | SHA-256 校验码 |"
+            echo "| ---  | --- |"
+            for ext in exe jar sh deb; do
+              file="HMCL-${VERSION}.${ext}"
+              echo "| [${file}](${BASE}/${file}) | \`$(cat "HMCL/build/libs/${file}.sha256")\` |"
+            done
+            echo
+            echo "> 本构建 \`hmcl.official=false\`，未使用 HMCL 官方签名密钥，窗口标题会显示「Unofficial Build」，请勿将其视为官方版本。源码依据 [GPLv3](https://github.com/${GITHUB_REPOSITORY}/blob/main/LICENSE) 及 HMCL 附加条款发布；分发时请保留版权声明与「非官方构建」标识，并提供对应源码。"
+          } > RELEASE_NOTE
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION='${{ steps.meta.outputs.version }}'
+          TAG='${{ steps.meta.outputs.tag }}'
+
+          # A pushed tag already exists, so --target is only needed when the tag
+          # has to be created for a manual run.
+          TARGET_ARGS=()
+          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
+            TARGET_ARGS=(--target "$GITHUB_SHA")
+          fi
+
+          gh release create "$TAG" \
+            "HMCL/build/libs/HMCL-${VERSION}.exe" \
+            "HMCL/build/libs/HMCL-${VERSION}.jar" \
+            "HMCL/build/libs/HMCL-${VERSION}.sh" \
+            "HMCL/build/libs/HMCL-${VERSION}.deb" \
+            "${TARGET_ARGS[@]}" \
+            --title "$TAG" \
+            --notes-file RELEASE_NOTE \
+            --prerelease
